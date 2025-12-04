@@ -18,12 +18,15 @@ pipeline {
         }
         stage('Deploy to Target') {
             steps {
-                sshagent(['target-ssh-key']) {
-                    sh 'ssh -o StrictHostKeyChecking=no laborant@target "sudo systemctl stop main.service"'
-
-                    sh 'scp -o StrictHostKeyChecking=no main laborant@target:~/main'
-
-                    sh 'ssh -o StrictHostKeyChecking=no laborant@target "sudo systemctl start main.service"'
+                withCredentials([sshUserPrivateKey(
+                    credentialsId: 'target-ssh-key',
+                    keyFileVariable: 'SSH_KEY'
+                )]) {
+                    sh """
+                        ssh -o StrictHostKeyChecking=no -i $SSH_KEY laborant@target "sudo systemctl stop main.service"
+                        scp -o StrictHostKeyChecking=no -i $SSH_KEY main laborant@target:~/main
+                        ssh -o StrictHostKeyChecking=no -i $SSH_KEY laborant@target "sudo systemctl start main.service"
+                    """
                 }
             }
         }
