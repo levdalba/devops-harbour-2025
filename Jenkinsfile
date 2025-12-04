@@ -18,9 +18,10 @@ pipeline {
         }
         stage('Deploy') {
             steps {
-                sh 'scp -o StrictHostKeyChecking=no main laborant@target:~'
+                sshagent(credentials: ['target-ssh-key']) {
+                    sh 'scp -o StrictHostKeyChecking=no main laborant@target:~'
+                }
             }
         }
-
     }
 }
