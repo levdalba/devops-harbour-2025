@@ -16,14 +16,14 @@ pipeline {
                 sh "go build main.go"
             }
         }
-        stage('Deploy') {
+        stage('Deploy to Target') {
             steps {
-                withCredentials([sshUserPrivateKey(credentialsId: '0f3b5a5f-9a10-4518-844a-020edf06c136',
-                                                   keyFileVariable: 'SSH_KEY')]) {
-                    sh '''
-                        ssh -o StrictHostKeyChecking=no -i "$SSH_KEY" laborant@target "echo connected"
-                        scp -o StrictHostKeyChecking=no -i "$SSH_KEY" main laborant@target:~
-                    '''
+                sshagent(['target-ssh-key']) {
+                    sh 'ssh -o StrictHostKeyChecking=no laborant@target "sudo systemctl stop main.service"'
+
+                    sh 'scp -o StrictHostKeyChecking=no main laborant@target:~/main'
+
+                    sh 'ssh -o StrictHostKeyChecking=no laborant@target "sudo systemctl start main.service"'
                 }
             }
         }
