@@ -18,7 +18,7 @@ pipeline {
         }
         stage('Deploy') {
             steps {
-                withCredentials([sshUserPrivateKey(credentialsId: 'target-ssh-key',
+                withCredentials([sshUserPrivateKey(credentialsId: '0f3b5a5f-9a10-4518-844a-020edf06c136',
                                                    keyFileVariable: 'SSH_KEY')]) {
                     sh '''
                         ssh -o StrictHostKeyChecking=no -i "$SSH_KEY" laborant@target "echo connected"
