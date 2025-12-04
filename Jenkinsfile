@@ -18,8 +18,12 @@ pipeline {
         }
         stage('Deploy') {
             steps {
-                sshagent(credentials: ['target-ssh-key']) {
-                    sh 'scp -o StrictHostKeyChecking=no main laborant@target:~'
+                withCredentials([sshUserPrivateKey(credentialsId: 'target-ssh-key',
+                                                   keyFileVariable: 'SSH_KEY')]) {
+                    sh '''
+                        ssh -o StrictHostKeyChecking=no -i "$SSH_KEY" laborant@target "echo connected"
+                        scp -o StrictHostKeyChecking=no -i "$SSH_KEY" main laborant@target:~
+                    '''
                 }
             }
         }
