@@ -1,6 +1,10 @@
 pipeline {
     agent any
 
+    tools {
+        go "1.24.1"
+    }
+
     environment {
         IMAGE_NAME = "ttl.sh/levdalba-devops-harbour:2h"
         CONTAINER_NAME = "devops-app"
@@ -8,9 +12,6 @@ pipeline {
 
     stages {
         stage('Test') {
-            agent {
-                docker { image 'golang:1.24' }
-            }
             steps {
                 sh 'go test ./...'
             }
