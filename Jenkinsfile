@@ -35,10 +35,17 @@ pipeline {
 
         stage('Deploy to Docker VM') {
             steps {
-                script {
-                    sh "docker stop ${CONTAINER_NAME} || true"
-                    sh "docker rm ${CONTAINER_NAME} || true"
-                    sh "docker run -d -p 4444:4444 --name ${CONTAINER_NAME} ${IMAGE_NAME}"
+                withCredentials([sshUserPrivateKey(credentialsId: 'target-ssh-key', keyFileVariable: 'SSH_KEY')]) {
+                    script {
+                        def remote = "laborant@docker" 
+
+                        sh "ssh -o StrictHostKeyChecking=no -i $SSH_KEY ${remote} 'docker pull ${IMAGE_NAME}'"
+
+                        sh "ssh -o StrictHostKeyChecking=no -i $SSH_KEY ${remote} 'docker stop ${CONTAINER_NAME} || true'"
+                        sh "ssh -o StrictHostKeyChecking=no -i $SSH_KEY ${remote} 'docker rm ${CONTAINER_NAME} || true'"
+                        
+                        sh "ssh -o StrictHostKeyChecking=no -i $SSH_KEY ${remote} 'docker run -d -p 4444:4444 --name ${CONTAINER_NAME} ${IMAGE_NAME}'"
+                    }
                 }
             }
         }
