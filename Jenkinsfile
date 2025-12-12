@@ -1,50 +1,20 @@
 pipeline {
     agent any
-
-    tools {
-        go "1.24.1"
-    }
-
-    environment {
-        IMAGE_NAME = "ttl.sh/levdalba-devops-harbour:2h"
-        CONTAINER_NAME = "devops-app"
-    }
-
     stages {
-        stage('Test') {
-            steps {
-                sh 'go test ./...'
-            }
-        }
-
-        stage('Build Docker Image') {
+        stage('Build & Push') {
             steps {
                 script {
-                    sh "docker build --no-cache --load -t ${IMAGE_NAME} ."
+                    sh 'docker build . --tag ttl.sh/myapp:1h'
+                    sh 'docker push ttl.sh/myapp:1h'
                 }
             }
         }
-
-        stage('Push to Registry') {
+        stage('Deploy to Kubernetes') {
             steps {
-                script {
-                    sh "docker push ${IMAGE_NAME}"
-                }
-            }
-        }
-
-        stage('Deploy to Docker VM') {
-            steps {
-                withCredentials([sshUserPrivateKey(credentialsId: 'target-ssh-key', keyFileVariable: 'SSH_KEY')]) {
+                withKubeConfig(credentialsId: 'k8s-token', serverUrl: 'https://kubernetes:6443') {
                     script {
-                        def remote = "laborant@docker" 
-
-                        sh "ssh -o StrictHostKeyChecking=no -i $SSH_KEY ${remote} 'docker pull ${IMAGE_NAME}'"
-
-                        sh "ssh -o StrictHostKeyChecking=no -i $SSH_KEY ${remote} 'docker stop ${CONTAINER_NAME} || true'"
-                        sh "ssh -o StrictHostKeyChecking=no -i $SSH_KEY ${remote} 'docker rm ${CONTAINER_NAME} || true'"
-                        
-                        sh "ssh -o StrictHostKeyChecking=no -i $SSH_KEY ${remote} 'docker run -d -p 4444:4444 --name ${CONTAINER_NAME} ${IMAGE_NAME}'"
+                        sh 'kubectl run myapp --image=ttl.sh/myapp:1h --dry-run=client -o=yaml > pod.yaml'
+                        sh 'kubectl apply -f pod.yaml --force'
                     }
                 }
             }
