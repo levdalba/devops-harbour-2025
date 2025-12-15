@@ -13,7 +13,7 @@ pipeline {
             steps {
                 withKubeConfig(credentialsId: 'k8s-token', serverUrl: 'https://kubernetes:6443') {
                     script {
-                        sh 'kubectl apply -f pod.yaml --force'
+                        sh 'kubectl apply -f pod.yaml --force --validate=false'
                     }
                 }
             }
