@@ -11,12 +11,12 @@ pipeline {
         }
         stage('Deploy to EC2') {
             steps {
-                sshagent(['ec2-ssh-key']) {
+                withCredentials([sshUserPrivateKey(credentialsId: 'ec2-ssh-key', keyFileVariable: 'MY_SSH_KEY')]) {
                     script {
                         def remoteIp = '13.251.126.56' 
                         
                         sh """
-                            ssh -o StrictHostKeyChecking=no ec2-user@${remoteIp} "
+                            ssh -i \$MY_SSH_KEY -o StrictHostKeyChecking=no ec2-user@${remoteIp} "
                                 docker pull ttl.sh/myapp:1h && \\
                                 docker stop myapp || true && \\
                                 docker rm myapp || true && \\
