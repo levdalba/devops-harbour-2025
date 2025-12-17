@@ -9,11 +9,20 @@ pipeline {
                 }
             }
         }
-        stage('Deploy to Kubernetes') {
+        stage('Deploy to EC2') {
             steps {
-                withKubeConfig(credentialsId: 'k8s-token', serverUrl: 'https://kubernetes:6443') {
+                sshagent(['ec2-ssh-key']) {
                     script {
-                        sh 'kubectl apply -f pod.yaml --force --validate=false'
+                        def remoteIp = '13.251.126.56' 
+                        
+                        sh """
+                            ssh -o StrictHostKeyChecking=no ec2-user@${remoteIp} "
+                                docker pull ttl.sh/myapp:1h && \\
+                                docker stop myapp || true && \\
+                                docker rm myapp || true && \\
+                                docker run -d --name myapp -p 4444:4444 ttl.sh/myapp:1h
+                            "
+                        """
                     }
                 }
             }
